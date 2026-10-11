@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cs-backend-controller
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - HEALTH_INTERVAL=3
+      - HEARTBEAT_TIMEOUT=10
+      - RECOVERY_TIMEOUT=15
+      - CPU_WARNING_THRESHOLD=75.0
+      - CPU_CRITICAL_THRESHOLD=90.0
+      - MEMORY_WARNING_THRESHOLD=75.0
+      - MEMORY_CRITICAL_THRESHOLD=90.0
+      - IDLE_THRESHOLD=5.0
+      - IDLE_DURATION=120
+      - DEMO_MODE=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - cs-node-web
+      - cs-node-api
+      - cs-node-worker
+      - cs-node-auth
+      - cs-node-storage
+    networks:
+      - cloudsentinel-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cs-frontend-dashboard
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - cloudsentinel-net
+
+  cs-node-web:
+    build:
+      context: ./infrastructure/demo-nodes/node-web
+      dockerfile: Dockerfile
+    container_name: cs-node-web
+    ports:
+      - "8001:8001"
+    environment:
+      - NODE_ID=cs-node-web
+      - SERVICE_NAME=web
+      - PORT=8001
+      - CONTAINER_NAME=cs-node-web
+    networks:
+      - cloudsentinel-net
+    restart: unless-stopped
+
+  cs-node-api:
+    build:
+      context: ./infrastructure/demo-nodes/node-api
+      dockerfile: Dockerfile
+    container_name: cs-node-api
+    ports:
+      - "8002:8002"
+    environment:
+      - NODE_ID=cs-node-api
+      - SERVICE_NAME=api
+      - PORT=8002
+      - CONTAINER_NAME=cs-node-api
+    networks:
+      - cloudsentinel-net
+    restart: unless-stopped
+
+  cs-node-worker:
+    build:
+      context: ./infrastructure/demo-nodes/node-worker
+      dockerfile: Dockerfile
+    container_name: cs-node-worker
+    ports:
+      - "8003:8003"
+    environment:
+      - NODE_ID=cs-node-worker
+      - SERVICE_NAME=worker
+      - PORT=8003
+      - CONTAINER_NAME=cs-node-worker
+    networks:
+      - cloudsentinel-net
+    restart: unless-stopped
+
+  cs-node-auth:
+    build:
+      context: ./infrastructure/demo-nodes/node-auth
+      dockerfile: Dockerfile
+    container_name: cs-node-auth
+    ports:
+      - "8004:8004"
+    environment:
+      - NODE_ID=cs-node-auth
+      - SERVICE_NAME=auth
+      - PORT=8004
+      - CONTAINER_NAME=cs-node-auth
+    networks:
+      - cloudsentinel-net
+    restart: unless-stopped
+
+  cs-node-storage:
+    build:
+      context: ./infrastructure/demo-nodes/node-storage
+      dockerfile: Dockerfile
+    container_name: cs-node-storage
+    ports:
+      - "8005:8005"
+    environment:
+      - NODE_ID=cs-node-storage
+      - SERVICE_NAME=storage
+      - PORT=8005
+      - CONTAINER_NAME=cs-node-storage
+    networks:
+      - cloudsentinel-net
+    restart: unless-stopped
+
+networks:
+  cloudsentinel-net:
+    driver: bridge
